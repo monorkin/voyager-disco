@@ -21,7 +21,7 @@ const CMD_SET_RGB_LED_ALL: u8 = 0x09;
 const EVT_PAIRING_SUCCESS: u8 = 0x04;
 
 #[derive(Parser)]
-#[command(name = "voyager-disco", about = "Control ZSA Voyager RGB LEDs")]
+#[command(name = "voyager-disco", version, about = "Control ZSA Voyager RGB LEDs")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
