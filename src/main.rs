@@ -40,10 +40,46 @@ enum Command {
         /// Shell to generate completions for
         shell: Shell,
     },
+    /// Control keyboard brightness
+    Brightness {
+        #[command(subcommand)]
+        command: BrightnessCommand,
+    },
     /// Omarchy integration commands
     Omarchy {
         #[command(subcommand)]
         command: OmarchyCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum BrightnessCommand {
+    /// Increase brightness by N steps (default 1)
+    Up {
+        /// Number of steps to increase
+        #[arg(default_value = "1")]
+        steps: u8,
+        /// Target specific devices (comma-separated serial numbers). Defaults to all.
+        #[arg(short, long)]
+        device: Option<String>,
+    },
+    /// Decrease brightness by N steps (default 1)
+    Down {
+        /// Number of steps to decrease
+        #[arg(default_value = "1")]
+        steps: u8,
+        /// Target specific devices (comma-separated serial numbers). Defaults to all.
+        #[arg(short, long)]
+        device: Option<String>,
+    },
+    /// Set brightness to an absolute percentage (0-100)
+    Set {
+        /// Brightness percentage (0-100)
+        #[arg(value_parser = clap::value_parser!(u8).range(0..=100))]
+        percent: u8,
+        /// Target specific devices (comma-separated serial numbers). Defaults to all.
+        #[arg(short, long)]
+        device: Option<String>,
     },
 }
 
@@ -86,6 +122,20 @@ fn run() -> Result<()> {
         }
         Command::Completions { shell } => {
             generate(shell, &mut Cli::command(), "voyager-disco", &mut std::io::stdout());
+        }
+        Command::Brightness { command } => {
+            let device = match &command {
+                BrightnessCommand::Up { device, .. } => device,
+                BrightnessCommand::Down { device, .. } => device,
+                BrightnessCommand::Set { device, .. } => device,
+            };
+            let api = HidApi::new().context("Failed to initialize HID API")?;
+            let devices = device::open_devices(&api, device)?;
+            match command {
+                BrightnessCommand::Up { steps, .. } => device::brightness_up(&devices, steps)?,
+                BrightnessCommand::Down { steps, .. } => device::brightness_down(&devices, steps)?,
+                BrightnessCommand::Set { percent, .. } => device::brightness_set(&devices, percent)?,
+            }
         }
         Command::Omarchy { command } => match command {
             OmarchyCommand::Install => {

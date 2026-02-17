@@ -1,5 +1,6 @@
 use anyhow::{Context, Result, bail};
 use hidapi::{DeviceInfo, HidApi};
+use std::{thread, time::Duration};
 
 const VENDOR_ID: u16 = 0x3297;
 const USAGE_PAGE: u16 = 0xFF60;
@@ -11,6 +12,7 @@ const CMD_PAIRING_INIT: u8 = 0x01;
 const CMD_RGB_CONTROL: u8 = 0x05;
 const CMD_SET_RGB_LED: u8 = 0x06;
 const CMD_SET_RGB_LED_ALL: u8 = 0x09;
+const CMD_UPDATE_BRIGHTNESS: u8 = 0x08;
 const CMD_GET_PROTOCOL_VERSION: u8 = 0xFE;
 
 // Oryx protocol event codes
@@ -18,6 +20,7 @@ const EVT_PAIRING_SUCCESS: u8 = 0x04;
 const EVT_GET_PROTOCOL_VERSION: u8 = 0xFE;
 
 const EXPECTED_PROTOCOL_VERSION: u8 = 0x04;
+const BRIGHTNESS_STEPS: u8 = 16;
 
 fn is_oryx_raw_hid(d: &DeviceInfo) -> bool {
     d.vendor_id() == VENDOR_ID
@@ -131,6 +134,11 @@ impl Device {
 
     fn set_color_for_key(&self, index: u8, r: u8, g: u8, b: u8) -> Result<()> {
         self.send(&[CMD_SET_RGB_LED, index, r, g, b])
+    }
+
+    fn update_brightness(&self, increase: bool) -> Result<()> {
+        let direction = if increase { 1 } else { 0 };
+        self.send(&[CMD_UPDATE_BRIGHTNESS, direction])
     }
 }
 
@@ -248,6 +256,75 @@ pub fn reset(devices: &[Device]) -> Result<()> {
             .disable_rgb_control()
             .with_context(|| format!("Resetting {}", device.label))?;
         eprintln!("{}: restored normal lighting", device.label);
+    }
+    Ok(())
+}
+
+pub fn brightness_up(devices: &[Device], steps: u8) -> Result<()> {
+    for device in devices {
+        device
+            .pair()
+            .with_context(|| format!("Pairing with {}", device.label))?;
+        for i in 0..steps {
+            if i > 0 {
+                thread::sleep(Duration::from_millis(5));
+            }
+            device
+                .update_brightness(true)
+                .with_context(|| format!("Increasing brightness on {}", device.label))?;
+        }
+        eprintln!("{}: brightness up {} step(s)", device.label, steps);
+    }
+    Ok(())
+}
+
+pub fn brightness_down(devices: &[Device], steps: u8) -> Result<()> {
+    for device in devices {
+        device
+            .pair()
+            .with_context(|| format!("Pairing with {}", device.label))?;
+        for i in 0..steps {
+            if i > 0 {
+                thread::sleep(Duration::from_millis(5));
+            }
+            device
+                .update_brightness(false)
+                .with_context(|| format!("Decreasing brightness on {}", device.label))?;
+        }
+        eprintln!("{}: brightness down {} step(s)", device.label, steps);
+    }
+    Ok(())
+}
+
+pub fn brightness_set(devices: &[Device], percent: u8) -> Result<()> {
+    let increases = (percent as u16 * BRIGHTNESS_STEPS as u16 + 50) / 100;
+
+    for device in devices {
+        device
+            .pair()
+            .with_context(|| format!("Pairing with {}", device.label))?;
+
+        // Bottom out to 0
+        for i in 0..BRIGHTNESS_STEPS {
+            if i > 0 {
+                thread::sleep(Duration::from_millis(5));
+            }
+            device
+                .update_brightness(false)
+                .with_context(|| format!("Decreasing brightness on {}", device.label))?;
+        }
+
+        // Step up to target
+        for i in 0..increases {
+            if i > 0 {
+                thread::sleep(Duration::from_millis(5));
+            }
+            device
+                .update_brightness(true)
+                .with_context(|| format!("Increasing brightness on {}", device.label))?;
+        }
+
+        eprintln!("{}: brightness set to {}%", device.label, percent);
     }
     Ok(())
 }
