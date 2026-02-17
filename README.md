@@ -21,6 +21,15 @@ voyager-disco set-color '#ff00aa'
 
 Sets all LEDs to the given hex color. The color persists until reset or keyboard power cycle.
 
+To set a single key, pass `-k` / `--key` with the LED index (0-51):
+
+```sh
+voyager-disco set-color ff0000 -k 0
+voyager-disco set-color 00ff00 --key 26
+```
+
+LED indices 0-25 are the left half, 26-51 are the right half.
+
 ### Reset to normal lighting
 
 ```sh
@@ -40,6 +49,28 @@ voyager-disco reset -d ABC123
 ```
 
 Use `voyager-disco list` to find serial numbers.
+
+### Control brightness
+
+```sh
+voyager-disco brightness up
+voyager-disco brightness down
+voyager-disco brightness up 5
+voyager-disco brightness down 3
+voyager-disco brightness set 80
+```
+
+`up` and `down` change brightness by the given number of steps (default 1). `set` sets brightness to an absolute percentage (0-100). All three accept `-d` / `--device` to target specific keyboards.
+
+### Generate shell completions
+
+```sh
+voyager-disco completions bash
+voyager-disco completions zsh
+voyager-disco completions fish
+```
+
+Prints shell completions to stdout. Supported shells: `bash`, `zsh`, `fish`, `elvish`, `powershell`.
 
 ### List connected keyboards
 
