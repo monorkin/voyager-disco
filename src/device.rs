@@ -9,6 +9,7 @@ const PACKET_SIZE: usize = 32;
 // Oryx protocol command codes
 const CMD_PAIRING_INIT: u8 = 0x01;
 const CMD_RGB_CONTROL: u8 = 0x05;
+const CMD_SET_RGB_LED: u8 = 0x06;
 const CMD_SET_RGB_LED_ALL: u8 = 0x09;
 const CMD_GET_PROTOCOL_VERSION: u8 = 0xFE;
 
@@ -127,6 +128,10 @@ impl Device {
     fn set_color_all(&self, r: u8, g: u8, b: u8) -> Result<()> {
         self.send(&[CMD_SET_RGB_LED_ALL, r, g, b])
     }
+
+    fn set_color_for_key(&self, index: u8, r: u8, g: u8, b: u8) -> Result<()> {
+        self.send(&[CMD_SET_RGB_LED, index, r, g, b])
+    }
 }
 
 fn parse_device_filter(device: &Option<String>) -> Option<Vec<String>> {
@@ -211,6 +216,25 @@ pub fn set_color(devices: &[Device], r: u8, g: u8, b: u8) -> Result<()> {
             .set_color_all(r, g, b)
             .with_context(|| format!("Setting color on {}", device.label))?;
         eprintln!("{}: set color to #{:02x}{:02x}{:02x}", device.label, r, g, b);
+    }
+    Ok(())
+}
+
+pub fn set_color_for_key(devices: &[Device], index: u8, r: u8, g: u8, b: u8) -> Result<()> {
+    for device in devices {
+        device
+            .pair()
+            .with_context(|| format!("Pairing with {}", device.label))?;
+        device
+            .enable_rgb_control()
+            .with_context(|| format!("Enabling RGB on {}", device.label))?;
+        device
+            .set_color_for_key(index, r, g, b)
+            .with_context(|| format!("Setting color for key {} on {}", index, device.label))?;
+        eprintln!(
+            "{}: set key {} to #{:02x}{:02x}{:02x}",
+            device.label, index, r, g, b
+        );
     }
     Ok(())
 }

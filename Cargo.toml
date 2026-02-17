@@ -1,6 +1,6 @@
 [package]
 name = "voyager-disco"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 
 [dependencies]
@@ -8,4 +8,4 @@ clap = { version = "4", features = ["derive"] }
 clap_complete = "4"
 hidapi = "2"
 anyhow = "1"
-toml = "0.8"
+toml = "1.0"

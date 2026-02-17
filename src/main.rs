@@ -19,9 +19,12 @@ struct Cli {
 enum Command {
     /// List all connected ZSA keyboards
     List,
-    /// Set all LEDs to a color (hex value, e.g. ff00aa or #ff00aa)
+    /// Set LEDs to a color (hex value, e.g. ff00aa or #ff00aa)
     SetColor {
         color: String,
+        /// LED key index (0-51). Omit to set all LEDs.
+        #[arg(short, long)]
+        key: Option<u8>,
         /// Target specific devices (comma-separated serial numbers). Defaults to all.
         #[arg(short, long)]
         device: Option<String>,
@@ -64,11 +67,17 @@ fn run() -> Result<()> {
             let api = HidApi::new().context("Failed to initialize HID API")?;
             device::list(&api);
         }
-        Command::SetColor { ref color, ref device } => {
+        Command::SetColor { ref color, key, ref device } => {
             let (r, g, b) = color::hex_to_rgb(color)?;
             let api = HidApi::new().context("Failed to initialize HID API")?;
             let devices = device::open_devices(&api, device)?;
-            device::set_color(&devices, r, g, b)?;
+            match key {
+                Some(index) => {
+                    anyhow::ensure!(index <= 51, "Key index must be 0-51, got {index}");
+                    device::set_color_for_key(&devices, index, r, g, b)?;
+                }
+                None => device::set_color(&devices, r, g, b)?,
+            }
         }
         Command::Reset { ref device } => {
             let api = HidApi::new().context("Failed to initialize HID API")?;
