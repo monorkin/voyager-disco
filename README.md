@@ -1,6 +1,6 @@
 # voyager-disco
 
-A small stand-alone CLI tool to control the RGB LEDs on [ZSA Voyager](https://www.zsa.io/voyager) keyboards on-the-fly, without Keymapp or reflashing firmware.
+A small stand-alone CLI tool to control the RGB LEDs on [ZSA](https://www.zsa.io/) keyboards (Voyager, Moonlander, ErgoDox EZ) on-the-fly, without Keymapp or reflashing firmware.
 
 It talks directly to the keyboard over USB HID using ZSA's Oryx protocol.
 
@@ -21,14 +21,6 @@ voyager-disco set-color '#ff00aa'
 
 Sets all LEDs to the given hex color. The color persists until reset or keyboard power cycle.
 
-### Match the current OS theme
-
-```sh
-voyager-disco match-theme
-```
-
-Reads the accent color from `~/.config/omarchy/current/theme/colors.toml` and applies it to all LEDs.
-
 ### Reset to normal lighting
 
 ```sh
@@ -39,7 +31,7 @@ Restores the keyboard's own lighting (whatever you configured in Oryx).
 
 ### Target specific keyboards
 
-All commands that change LEDs accept `-d` / `--device` to target specific keyboards by serial number (comma-separated). Without it, all connected Voyagers are targeted.
+All commands that change LEDs accept `-d` / `--device` to target specific keyboards by serial number (comma-separated). Without it, all connected ZSA keyboards are targeted.
 
 ```sh
 voyager-disco set-color ff0000 -d ABC123
@@ -55,16 +47,27 @@ Use `voyager-disco list` to find serial numbers.
 voyager-disco list
 ```
 
-Prints serial number, product name, and HID path for each connected Voyager.
+Prints serial number, product name, and HID path for each connected ZSA keyboard.
 
 ## Omarchy integration
 
-To automatically sync your keyboard LEDs when the [Omarchy](https://omarchy.org/) theme changes, create a theme-set hook:
+### Install the theme-set hook
+
+To automatically sync your keyboard LEDs when the [Omarchy](https://omarchy.org/) theme changes:
 
 ```sh
-echo 'voyager-disco match-theme' >> ~/.config/omarchy/hooks/theme-set
-chmod +x ~/.config/omarchy/hooks/theme-set
+voyager-disco omarchy install
 ```
+
+This adds `voyager-disco omarchy match-theme` to `~/.config/omarchy/hooks/theme-set` and makes the hook executable.
+
+### Match the current OS theme
+
+```sh
+voyager-disco omarchy match-theme
+```
+
+Reads the accent color from `~/.config/omarchy/current/theme/colors.toml` and applies it to all LEDs.
 
 ## Build
 
@@ -108,7 +111,7 @@ That will do a cross-platform build and then create a GitHub release with the ge
 
 - **Keymapp must not be running** (or at least not connected to the keyboard), as it holds the raw HID interface open.
 - **Brightness scaling**: The firmware scales colors by the keyboard's brightness setting. At 50% brightness, `ff0000` appears as `7f0000`.
-- **No custom firmware needed**: This works with stock ZSA firmware. The Oryx protocol is built into every Voyager.
+- **No custom firmware needed**: This works with stock ZSA firmware. The Oryx protocol is built into every ZSA keyboard.
 - Colors are stored in keyboard RAM. They survive the tool exiting but not a power cycle.
 
 ## How it works
@@ -117,15 +120,16 @@ The Voyager's firmware includes a QMK module called "Oryx" ([source](https://git
 
 ### USB device identification
 
-The Voyager exposes multiple HID interfaces (keyboard, consumer control, raw HID). The tool finds the correct one by filtering on:
+ZSA keyboards expose multiple HID interfaces (keyboard, consumer control, raw HID). The tool finds the correct one by filtering on:
 
 | Parameter      | Value    |
 |----------------|----------|
 | Vendor ID      | `0x3297` |
-| Product ID     | `0x1977` |
 | HID Usage Page | `0xFF60` |
 | HID Usage ID   | `0x61`   |
 | Packet Size    | 32 bytes |
+
+Product IDs vary per keyboard model (e.g. `0x1977` for Voyager) and are not used for filtering. After connecting, the tool verifies the Oryx protocol version matches `0x04`.
 
 ### Oryx protocol (v0x04)
 
