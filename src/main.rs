@@ -3,7 +3,8 @@ mod device;
 mod omarchy;
 
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete::{Shell, generate};
 use hidapi::HidApi;
 use std::process;
 
@@ -30,6 +31,11 @@ enum Command {
         /// Target specific devices (comma-separated serial numbers). Defaults to all.
         #[arg(short, long)]
         device: Option<String>,
+    },
+    /// Generate shell completions
+    Completions {
+        /// Shell to generate completions for
+        shell: Shell,
     },
     /// Omarchy integration commands
     Omarchy {
@@ -68,6 +74,9 @@ fn run() -> Result<()> {
             let api = HidApi::new().context("Failed to initialize HID API")?;
             let devices = device::open_devices(&api, device)?;
             device::reset(&devices)?;
+        }
+        Command::Completions { shell } => {
+            generate(shell, &mut Cli::command(), "voyager-disco", &mut std::io::stdout());
         }
         Command::Omarchy { command } => match command {
             OmarchyCommand::Install => {

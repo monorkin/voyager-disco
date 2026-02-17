@@ -67,3 +67,29 @@ else
 fi
 
 echo "Installed ${BINARY} ${TAG} to ${INSTALL_DIR}/${BINARY}"
+
+# Install shell completions
+install_completions() {
+  SHELL_NAME="$1"
+  DEST="$2"
+
+  "${INSTALL_DIR}/${BINARY}" completions "$SHELL_NAME" > "${TMPDIR}/${BINARY}.comp"
+  if [ -w "$(dirname "$DEST")" ]; then
+    install -Dm644 "${TMPDIR}/${BINARY}.comp" "$DEST"
+  else
+    sudo install -Dm644 "${TMPDIR}/${BINARY}.comp" "$DEST"
+  fi
+  echo "Installed ${SHELL_NAME} completions to ${DEST}"
+}
+
+if command -v bash >/dev/null 2>&1; then
+  install_completions bash /usr/share/bash-completion/completions/${BINARY}
+fi
+
+if command -v zsh >/dev/null 2>&1; then
+  install_completions zsh /usr/share/zsh/site-functions/_${BINARY}
+fi
+
+if command -v fish >/dev/null 2>&1; then
+  install_completions fish /usr/share/fish/vendor_completions.d/${BINARY}.fish
+fi
