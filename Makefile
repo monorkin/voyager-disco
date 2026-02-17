@@ -6,10 +6,13 @@ TARGETS = \
 	x86_64-unknown-linux-gnu \
 	aarch64-unknown-linux-gnu
 
-.PHONY: build build-all release clean
+.PHONY: build install build-all release clean
 
 build:
 	cargo build --release
+
+install: build
+	install -Dm755 target/release/$(BINARY) $(DESTDIR)/usr/bin/$(BINARY)
 
 build-all:
 	@for target in $(TARGETS); do \
