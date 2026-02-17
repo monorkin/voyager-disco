@@ -1,42 +1,16 @@
 # voyager-disco
 
-A small CLI tool to control the RGB LEDs on [ZSA Voyager](https://www.zsa.io/voyager) keyboards on-the-fly, without Keymapp or reflashing firmware.
+A small stand-alone CLI tool to control the RGB LEDs on [ZSA Voyager](https://www.zsa.io/voyager) keyboards on-the-fly, without Keymapp or reflashing firmware.
 
 It talks directly to the keyboard over USB HID using ZSA's Oryx protocol.
 
-## Build
-
-Requires Rust and a C compiler (for the `hidapi` native dependency).
+## Installation
 
 ```sh
-cargo build --release
-```
-
-The binary is at `target/release/voyager-disco`.
-
-### Linux: udev rules
-
-You need a udev rule to access the keyboard without root. If you've used Keymapp before, you likely already have one. Otherwise, create `/etc/udev/rules.d/50-zsa.rules`:
-
-```
-ATTRS{idVendor}=="3297", TAG+="uaccess"
-```
-
-Then reload:
-
-```sh
-sudo udevadm control --reload-rules && sudo udevadm trigger
+curl -fsSL https://raw.githubusercontent.com/monorkin/voyager-disco/main/install.sh | sh
 ```
 
 ## Usage
-
-### List connected keyboards
-
-```sh
-voyager-disco list
-```
-
-Prints serial number, product name, and HID path for each connected Voyager.
 
 ### Set a color
 
@@ -74,6 +48,52 @@ voyager-disco reset -d ABC123
 ```
 
 Use `voyager-disco list` to find serial numbers.
+
+### List connected keyboards
+
+```sh
+voyager-disco list
+```
+
+Prints serial number, product name, and HID path for each connected Voyager.
+
+## Build
+
+Requires Rust and a C compiler (for the `hidapi` native dependency).
+
+```sh
+make build
+```
+
+The binary is at `target/release/voyager-disco`.
+
+### Linux: udev rules
+
+You need a udev rule to access the keyboard without root. If you've used Keymapp before, you likely already have one. Otherwise, create `/etc/udev/rules.d/50-zsa.rules`:
+
+```
+ATTRS{idVendor}=="3297", TAG+="uaccess"
+```
+
+Then reload:
+
+```sh
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+### Cross-platform releases
+
+You'll need to install Cross, if you don't have it installed, and then run a `build-all`
+
+```bash
+cargo install cross
+make build-all
+```
+
+### Cutting a release
+
+To publish a release all you have to do is run `make release TAG=vX.Y.Z`.
+That will do a cross-platform build and then create a GitHub release with the generated binaries attached.
 
 ## Notes
 
@@ -216,3 +236,7 @@ The index mapping matches the `rgb_matrix.layout` array in the keyboard's `keybo
 - [oryx/config.h](https://github.com/zsa/qmk_modules/blob/main/oryx/config.h) — USB usage page/ID
 - [oryx/rgb_matrix_kb.inc](https://github.com/zsa/qmk_modules/blob/main/oryx/rgb_matrix_kb.inc) — webhid RGB effect
 - [keyboards/zsa/voyager/keyboard.json](https://github.com/zsa/qmk_firmware/blob/firmware24/keyboards/zsa/voyager/keyboard.json) — USB IDs, LED layout
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
