@@ -57,6 +57,15 @@ voyager-disco list
 
 Prints serial number, product name, and HID path for each connected Voyager.
 
+## Omarchy integration
+
+To automatically sync your keyboard LEDs when the [Omarchy](https://omarchy.org/) theme changes, create a theme-set hook:
+
+```sh
+echo 'voyager-disco match-theme' >> ~/.config/omarchy/hooks/theme-set
+chmod +x ~/.config/omarchy/hooks/theme-set
+```
+
 ## Build
 
 Requires Rust and a C compiler (for the `hidapi` native dependency).
