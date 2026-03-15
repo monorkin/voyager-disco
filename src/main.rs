@@ -95,6 +95,15 @@ enum OmarchyCommand {
     },
 }
 
+fn omarchy_match_theme(device: &Option<String>) -> Result<()> {
+    let (r, g, b) = omarchy::read_theme_accent()?;
+    let api = HidApi::new().context("Failed to initialize HID API")?;
+    let devices = device::open_devices(&api, device)?;
+    device::set_color(&devices, r, g, b)?;
+    eprintln!("(from {})", omarchy::theme_colors_path()?.display());
+    Ok(())
+}
+
 fn run() -> Result<()> {
     let cli = Cli::parse();
 
@@ -142,15 +151,9 @@ fn run() -> Result<()> {
                 omarchy::install()?;
             }
             OmarchyCommand::MatchTheme { ref device } => {
-                let (r, g, b) = omarchy::read_theme_accent()?;
-                let api = HidApi::new().context("Failed to initialize HID API")?;
-                if !device::has_devices(&api) {
-                    eprintln!("No ZSA keyboards found, skipping theme sync");
-                    return Ok(());
+                if let Err(e) = omarchy_match_theme(device) {
+                    eprintln!("voyager-disco: skipping theme sync: {e:#}");
                 }
-                let devices = device::open_devices(&api, device)?;
-                device::set_color(&devices, r, g, b)?;
-                eprintln!("(from {})", omarchy::theme_colors_path()?.display());
             }
         },
     }
