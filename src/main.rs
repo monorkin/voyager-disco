@@ -144,6 +144,10 @@ fn run() -> Result<()> {
             OmarchyCommand::MatchTheme { ref device } => {
                 let (r, g, b) = omarchy::read_theme_accent()?;
                 let api = HidApi::new().context("Failed to initialize HID API")?;
+                if !device::has_devices(&api) {
+                    eprintln!("No ZSA keyboards found, skipping theme sync");
+                    return Ok(());
+                }
                 let devices = device::open_devices(&api, device)?;
                 device::set_color(&devices, r, g, b)?;
                 eprintln!("(from {})", omarchy::theme_colors_path()?.display());

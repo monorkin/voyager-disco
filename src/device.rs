@@ -186,6 +186,10 @@ fn filtered_device_paths<'a>(
     Ok(matched)
 }
 
+pub fn has_devices(api: &HidApi) -> bool {
+    api.device_list().any(|d| is_oryx_raw_hid(d))
+}
+
 pub fn open_devices(api: &HidApi, device_flag: &Option<String>) -> Result<Vec<Device>> {
     let filter = parse_device_filter(device_flag);
     let infos = filtered_device_paths(api, &filter)?;
