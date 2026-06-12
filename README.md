@@ -151,18 +151,6 @@ make build-all
 ### Cutting a release
 
 To publish a release all you have to do is run `make release`.
-That will verify `Cargo.lock` is in sync, do a cross-platform build, create a GitHub release (tagged `v` + the version in `Cargo.toml`) with the generated binaries attached, and publish the release to the AUR. The publishing steps live in `./script/release-github` and `./script/release-aur`, which check their own preconditions and can be re-run individually. Re-running is safe: an already-existing GitHub release is reused, and unchanged AUR packages aren't re-pushed.
-
-### Publishing to the AUR
-
-`make release` runs `./script/release-aur` as its last step, which publishes two packages:
-
-- `voyager-disco` — built from the release source tarball on the user's machine, from `packaging/aur/PKGBUILD`. Build dependencies are declared as `makedepends`, so AUR helpers install them automatically.
-- `voyager-disco-bin` — repackages the prebuilt binaries attached to the GitHub release, from `packaging/aur/PKGBUILD-bin`.
-
-For each package it clones `ssh://aur@aur.archlinux.org/<name>.git` into `target/aur/<name>`, renders the template with the current version and source checksums, regenerates `.SRCINFO` with `makepkg --printsrcinfo`, commits, and pushes.
-
-`./script/release-aur` can also be run on its own to re-publish (pass `src` or `bin` to publish a single package), as long as the `vX.Y.Z` release already exists on GitHub — it refuses to run otherwise. It requires `makepkg` (Arch Linux) and an [AUR account](https://aur.archlinux.org) with your SSH key added.
 
 ## Notes
 
