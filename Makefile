@@ -1,6 +1,10 @@
 BINARY  = voyager-disco
 VERSION = $(shell grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
 
+ifeq ($(DESTDIR),)
+SUDO := $(shell [ -w /usr/bin ] || echo sudo)
+endif
+
 # Cross-compilation targets (requires `cross` or appropriate toolchains)
 TARGETS = \
 	x86_64-unknown-linux-gnu \
@@ -12,13 +16,13 @@ build:
 	cargo build --release
 
 install: build
-	install -Dm755 target/release/$(BINARY) $(DESTDIR)/usr/bin/$(BINARY)
+	$(SUDO) install -Dm755 target/release/$(BINARY) $(DESTDIR)/usr/bin/$(BINARY)
 	target/release/$(BINARY) completions bash > /tmp/$(BINARY).bash
 	target/release/$(BINARY) completions zsh > /tmp/_$(BINARY)
 	target/release/$(BINARY) completions fish > /tmp/$(BINARY).fish
-	install -Dm644 /tmp/$(BINARY).bash $(DESTDIR)/usr/share/bash-completion/completions/$(BINARY)
-	install -Dm644 /tmp/_$(BINARY) $(DESTDIR)/usr/share/zsh/site-functions/_$(BINARY)
-	install -Dm644 /tmp/$(BINARY).fish $(DESTDIR)/usr/share/fish/vendor_completions.d/$(BINARY).fish
+	$(SUDO) install -Dm644 /tmp/$(BINARY).bash $(DESTDIR)/usr/share/bash-completion/completions/$(BINARY)
+	$(SUDO) install -Dm644 /tmp/_$(BINARY) $(DESTDIR)/usr/share/zsh/site-functions/_$(BINARY)
+	$(SUDO) install -Dm644 /tmp/$(BINARY).fish $(DESTDIR)/usr/share/fish/vendor_completions.d/$(BINARY).fish
 	rm -f /tmp/$(BINARY).bash /tmp/_$(BINARY) /tmp/$(BINARY).fish
 
 build-all:

@@ -93,15 +93,13 @@ enum OmarchyCommand {
         #[arg(short, long)]
         device: Option<String>,
     },
-}
-
-fn omarchy_match_theme(device: &Option<String>) -> Result<()> {
-    let (r, g, b) = omarchy::read_theme_accent()?;
-    let api = HidApi::new().context("Failed to initialize HID API")?;
-    let devices = device::open_devices(&api, device)?;
-    device::set_color(&devices, r, g, b)?;
-    eprintln!("(from {})", omarchy::theme_colors_path()?.display());
-    Ok(())
+    /// Watch for keyboard connections and apply the current theme to them
+    #[cfg(target_os = "linux")]
+    Watch {
+        /// Target specific devices (comma-separated serial numbers). Defaults to all.
+        #[arg(short, long)]
+        device: Option<String>,
+    },
 }
 
 fn run() -> Result<()> {
@@ -151,9 +149,13 @@ fn run() -> Result<()> {
                 omarchy::install()?;
             }
             OmarchyCommand::MatchTheme { ref device } => {
-                if let Err(e) = omarchy_match_theme(device) {
+                if let Err(e) = omarchy::match_theme(device) {
                     eprintln!("voyager-disco: skipping theme sync: {e:#}");
                 }
+            }
+            #[cfg(target_os = "linux")]
+            OmarchyCommand::Watch { ref device } => {
+                omarchy::watch(device)?;
             }
         },
     }

@@ -92,6 +92,16 @@ voyager-disco omarchy install
 
 This adds `voyager-disco omarchy match-theme` to `~/.config/omarchy/hooks/theme-set` and makes the hook executable.
 
+On Linux it also installs and enables a systemd user service (`voyager-disco-watch.service`) that re-applies the theme whenever a ZSA keyboard is connected — useful with KVM switches, docks, or replugging, where the keyboard would otherwise come back with its default lighting.
+
+### Watch for keyboard connections
+
+```sh
+voyager-disco omarchy watch
+```
+
+Listens for udev hotplug events and applies the current theme accent to every ZSA keyboard as it's connected (and once at startup). Runs until killed. This is what `voyager-disco-watch.service` runs; you only need to invoke it manually if you don't want the systemd service. Linux only.
+
 ### Match the current OS theme
 
 ```sh
