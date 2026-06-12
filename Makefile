@@ -28,7 +28,7 @@ install: build
 
 build-all:
 	cargo fetch --locked
-	@for target in $(TARGETS); do \
+	@set -e; for target in $(TARGETS); do \
 		echo "Building for $$target..."; \
 		cross build --release --target $$target; \
 		os=$$(echo $$target | sed 's/.*-\(linux\|darwin\|freebsd\)-.*/\1/'); \

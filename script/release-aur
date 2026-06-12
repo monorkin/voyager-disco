@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 source script/lib
 
 WORKDIR=target/aur
+PKGREL=${PKGREL:-1}
 
 main() {
   command -v makepkg >/dev/null || die "makepkg is required to publish to the AUR"
@@ -51,6 +52,7 @@ publish_src() {
   tarball_sha=$(sha256_url "$REPO_URL/archive/v$VERSION.tar.gz")
 
   sed -e "s/@PKGVER@/$VERSION/" \
+      -e "s/@PKGREL@/$PKGREL/" \
       -e "s/@TARBALL_SHA256@/$tarball_sha/" \
       -e "s/@RULES_SHA256@/$(sha256_file packaging/aur/50-zsa.rules)/" \
       packaging/aur/PKGBUILD > "$WORKDIR/$BINARY/PKGBUILD"
@@ -71,6 +73,7 @@ publish_bin() {
   arm64_sha=$(sha256_url "$REPO_URL/releases/download/v$VERSION/$BINARY-linux-arm64")
 
   sed -e "s/@PKGVER@/$VERSION/" \
+      -e "s/@PKGREL@/$PKGREL/" \
       -e "s/@AMD64_SHA256@/$amd64_sha/" \
       -e "s/@ARM64_SHA256@/$arm64_sha/" \
       -e "s/@RULES_SHA256@/$(sha256_file packaging/aur/50-zsa.rules)/" \
