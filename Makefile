@@ -1,5 +1,5 @@
-BINARY  = voyager-disco
-VERSION = $(shell grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+BINARY  := $(shell . ./script/lib && echo $$BINARY)
+VERSION := $(shell . ./script/lib && echo $$VERSION)
 
 ifeq ($(DESTDIR),)
 SUDO := $(shell [ -w /usr/bin ] || echo sudo)
@@ -13,6 +13,7 @@ TARGETS = \
 .PHONY: build install build-all release clean
 
 build:
+	cargo fetch --locked
 	cargo build --release
 
 install: build
@@ -26,6 +27,7 @@ install: build
 	rm -f /tmp/$(BINARY).bash /tmp/_$(BINARY) /tmp/$(BINARY).fish
 
 build-all:
+	cargo fetch --locked
 	@for target in $(TARGETS); do \
 		echo "Building for $$target..."; \
 		cross build --release --target $$target; \
@@ -36,13 +38,15 @@ build-all:
 	done
 	@echo "Artifacts in dist/"
 
+
 release: build-all
-	@echo "Creating release v$(VERSION)..."
-	gh release create v$(VERSION) dist/* \
-		--title "v$(VERSION)" \
-		--generate-notes
+	./script/release-github
+	./script/release-aur
+	@echo
 	@echo "Released v$(VERSION)"
+	@echo
 
 clean:
 	cargo clean
 	rm -rf dist
+	rm -rf target/aur

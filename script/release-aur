@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+source script/lib
+
+WORKDIR=target/aur
+
+main() {
+  command -v makepkg >/dev/null || die "makepkg is required to publish to the AUR"
+  curl -fsIL "$REPO_URL/archive/v$VERSION.tar.gz" >/dev/null \
+    || die "GitHub release v$VERSION not found, run 'make release' first"
+
+  case ${1:-all} in
+    src) publish_src ;;
+    bin) publish_bin ;;
+    all) publish_src && publish_bin ;;
+    *) die "Usage: $0 [src|bin|all]" ;;
+  esac
+}
+
+sha256_file() {
+  sha256sum "$1" | cut -d' ' -f1
+}
+
+sha256_url() {
+  curl -fsSL "$1" | sha256sum | cut -d' ' -f1
+}
+
+aur_clone() {
+  rm -rf "$WORKDIR/$1"
+  git clone "ssh://aur@aur.archlinux.org/$1.git" "$WORKDIR/$1"
+  git -C "$WORKDIR/$1" checkout -B master
+}
+
+aur_push() {
+  (cd "$WORKDIR/$1" && makepkg --printsrcinfo > .SRCINFO)
+  git -C "$WORKDIR/$1" add -A
+  git -C "$WORKDIR/$1" diff --cached --quiet || git -C "$WORKDIR/$1" commit -m "Update to v$VERSION"
+  git -C "$WORKDIR/$1" push origin HEAD:master
+}
+
+publish_src() {
+  echo
+  echo "=== AUR: $BINARY ==="
+  echo
+
+  aur_clone "$BINARY"
+
+  local tarball_sha
+  tarball_sha=$(sha256_url "$REPO_URL/archive/v$VERSION.tar.gz")
+
+  sed -e "s/@PKGVER@/$VERSION/" \
+      -e "s/@TARBALL_SHA256@/$tarball_sha/" \
+      -e "s/@RULES_SHA256@/$(sha256_file packaging/aur/50-zsa.rules)/" \
+      packaging/aur/PKGBUILD > "$WORKDIR/$BINARY/PKGBUILD"
+  cp packaging/aur/50-zsa.rules "packaging/aur/$BINARY.install" "$WORKDIR/$BINARY/"
+
+  aur_push "$BINARY"
+}
+
+publish_bin() {
+  echo
+  echo "=== AUR: $BINARY-bin ==="
+  echo
+
+  aur_clone "$BINARY-bin"
+
+  local amd64_sha arm64_sha
+  amd64_sha=$(sha256_url "$REPO_URL/releases/download/v$VERSION/$BINARY-linux-amd64")
+  arm64_sha=$(sha256_url "$REPO_URL/releases/download/v$VERSION/$BINARY-linux-arm64")
+
+  sed -e "s/@PKGVER@/$VERSION/" \
+      -e "s/@AMD64_SHA256@/$amd64_sha/" \
+      -e "s/@ARM64_SHA256@/$arm64_sha/" \
+      -e "s/@RULES_SHA256@/$(sha256_file packaging/aur/50-zsa.rules)/" \
+      -e "s/@LICENSE_SHA256@/$(sha256_file LICENSE)/" \
+      packaging/aur/PKGBUILD-bin > "$WORKDIR/$BINARY-bin/PKGBUILD"
+  cp packaging/aur/50-zsa.rules "packaging/aur/$BINARY.install" LICENSE "$WORKDIR/$BINARY-bin/"
+
+  aur_push "$BINARY-bin"
+}
+
+main "$@"

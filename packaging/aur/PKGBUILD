@@ -1,0 +1,40 @@
+# Maintainer: Stanko K.R. <stanko@stanko.io>
+# Template for the AUR package. `make release-aur` fills in the
+# @PLACEHOLDER@ values and pushes the result to the AUR.
+pkgname=voyager-disco
+pkgver=@PKGVER@
+pkgrel=1
+pkgdesc="Control RGB LEDs on ZSA keyboards (Voyager, Moonlander, ErgoDox EZ) without Keymapp"
+arch=('x86_64' 'aarch64')
+url="https://github.com/monorkin/voyager-disco"
+license=('MIT')
+depends=('systemd-libs')
+makedepends=('cargo')
+# makepkg's -flto=auto in CFLAGS produces GCC-LTO objects for the bundled
+# hidapi C library, which Rust's lld linker can't read.
+options=('!lto')
+install=$pkgname.install
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz"
+        '50-zsa.rules')
+sha256sums=('@TARBALL_SHA256@'
+            '@RULES_SHA256@')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  cargo build --frozen --release
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$srcdir/50-zsa.rules" "$pkgdir/usr/lib/udev/rules.d/50-zsa.rules"
+  "target/release/$pkgname" completions bash | install -Dm644 /dev/stdin "$pkgdir/usr/share/bash-completion/completions/$pkgname"
+  "target/release/$pkgname" completions zsh | install -Dm644 /dev/stdin "$pkgdir/usr/share/zsh/site-functions/_$pkgname"
+  "target/release/$pkgname" completions fish | install -Dm644 /dev/stdin "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname.fish"
+}

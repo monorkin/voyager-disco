@@ -1,0 +1,39 @@
+# Maintainer: Stanko K.R. <stanko@stanko.io>
+# Template for the AUR -bin package. `make release-aur` fills in the
+# @PLACEHOLDER@ values and pushes the result to the AUR.
+pkgname=voyager-disco-bin
+_binname=voyager-disco
+pkgver=@PKGVER@
+pkgrel=1
+pkgdesc="Control RGB LEDs on ZSA keyboards (Voyager, Moonlander, ErgoDox EZ) without Keymapp (prebuilt binary)"
+arch=('x86_64' 'aarch64')
+url="https://github.com/monorkin/voyager-disco"
+license=('MIT')
+depends=('glibc' 'systemd-libs')
+provides=('voyager-disco')
+conflicts=('voyager-disco')
+install=voyager-disco.install
+source=('50-zsa.rules'
+        'LICENSE')
+source_x86_64=("$_binname-$pkgver::$url/releases/download/v$pkgver/$_binname-linux-amd64")
+source_aarch64=("$_binname-$pkgver::$url/releases/download/v$pkgver/$_binname-linux-arm64")
+sha256sums=('@RULES_SHA256@'
+            '@LICENSE_SHA256@')
+sha256sums_x86_64=('@AMD64_SHA256@')
+sha256sums_aarch64=('@ARM64_SHA256@')
+
+build() {
+  chmod +x "$_binname-$pkgver"
+  "./$_binname-$pkgver" completions bash > completions.bash
+  "./$_binname-$pkgver" completions zsh > completions.zsh
+  "./$_binname-$pkgver" completions fish > completions.fish
+}
+
+package() {
+  install -Dm755 "$_binname-$pkgver" "$pkgdir/usr/bin/$_binname"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 50-zsa.rules "$pkgdir/usr/lib/udev/rules.d/50-zsa.rules"
+  install -Dm644 completions.bash "$pkgdir/usr/share/bash-completion/completions/$_binname"
+  install -Dm644 completions.zsh "$pkgdir/usr/share/zsh/site-functions/_$_binname"
+  install -Dm644 completions.fish "$pkgdir/usr/share/fish/vendor_completions.d/$_binname.fish"
+}
