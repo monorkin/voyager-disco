@@ -113,7 +113,7 @@ Listens for udev hotplug events and applies the current theme accent to every ZS
 voyager-disco omarchy match-theme
 ```
 
-Reads the accent color from `~/.config/omarchy/current/theme/colors.toml` and applies it to all LEDs.
+Reads the accent color from `~/.local/state/omarchy/current/theme/colors.toml` (Omarchy 4+), falling back to `~/.config/omarchy/current/theme/colors.toml` on older installs, and applies it to all LEDs.
 
 ## Build
 

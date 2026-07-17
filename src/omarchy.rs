@@ -17,7 +17,21 @@ fn hook_path() -> Result<PathBuf> {
 
 pub fn theme_colors_path() -> Result<PathBuf> {
     let home = std::env::var("HOME").context("HOME environment variable not set")?;
-    Ok(PathBuf::from(home).join(".config/omarchy/current/theme/colors.toml"))
+    let home = PathBuf::from(home);
+
+    // Omarchy 4 moved the current theme to ~/.local/state; fall back to the
+    // pre-4 location under ~/.config for older installs.
+    let new_path = home.join(".local/state/omarchy/current/theme/colors.toml");
+    if new_path.exists() {
+        return Ok(new_path);
+    }
+
+    let old_path = home.join(".config/omarchy/current/theme/colors.toml");
+    if old_path.exists() {
+        return Ok(old_path);
+    }
+
+    Ok(new_path)
 }
 
 pub fn read_theme_accent() -> Result<(u8, u8, u8)> {
