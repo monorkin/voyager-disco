@@ -6,14 +6,43 @@ It talks directly to the keyboard over USB HID using ZSA's Oryx protocol.
 
 ## Installation
 
+### Arch linux
+
+There are two packages available in the AUR:
+- [`voyager-disco`](https://aur.archlinux.org/packages/voyager-disco) builds from source on your machine
+- [`voyager-disco-bin`](https://aur.archlinux.org/packages/voyager-disco-bin) installs the prebuilt release binary
+
+> [!NOTE]
+> If you don't know which to choose, pick the `-bin` version.
+> There isn't a differance in terms of functionality, the bin version is quicker to install, and won't install Rust or other build dependencies on your system
+
+Install using `yay`:
+
+```sh
+yay -S voyager-disco-bin
+```
+
+Install using `paru`:
+
+```sh
+paru -S voyager-disco-bin
+```
+
+### Other flavors of Linux
+
+Use the install script:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/monorkin/voyager-disco/main/install.sh | sh
 ```
 
-On Arch Linux, install from the AUR instead — both packages also set up the udev rule and shell completions:
+### MacOS
 
-- [`voyager-disco`](https://aur.archlinux.org/packages/voyager-disco) builds from source on your machine (e.g. `yay -S voyager-disco`)
-- [`voyager-disco-bin`](https://aur.archlinux.org/packages/voyager-disco-bin) installs the prebuilt release binary
+Use the install script:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/monorkin/voyager-disco/main/install.sh | sh
+```
 
 ## Usage
 
