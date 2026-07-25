@@ -87,6 +87,23 @@ Prints serial number, product name, and HID path for each connected ZSA keyboard
 
 ## Omarchy integration
 
+### Bar widget
+
+Voyager Disco has a [widget for Omarchy's bar](https://github.com/monorkin/omarchy-voyager-disco).
+It provides an UI around `voyager-disco` with which you can control your keyboard's LEDs directly from the shell.
+
+<img width="400" height="573" alt="Voyager Disco in the Omarchy bar" src="https://github.com/user-attachments/assets/32eae43f-adb3-4528-893b-cd2859fa0ed1" />
+
+To install it, run:
+
+```sh
+omarchy plugin add https://github.com/monorkin/omarchy-voyager-disco.git --enable
+omarchy bar plugin add monorkin.voyager-disco
+```
+
+> [!IMPORTANT]
+> The widget requires Omarchy 4 or later
+
 ### Install the theme-set hook
 
 To automatically sync your keyboard LEDs when the [Omarchy](https://omarchy.org/) theme changes:
